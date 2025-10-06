@@ -138,25 +138,27 @@ MonoBehaviour:
   m_Name: Standalone
   m_EditorClassIdentifier: 
   features:
-  - {fileID: -1711584063931583170}
-  - {fileID: 6287011685144672848}
+  - {fileID: -4836959658892597320}
   - {fileID: -515878431976442836}
+  - {fileID: -4977639165954686361}
+  - {fileID: 7401050513653150656}
+  - {fileID: 6287011685144672848}
+  - {fileID: 9105679202604773153}
   - {fileID: 7705537822336194491}
+  - {fileID: 5742386647743723153}
+  - {fileID: -8565237474420999015}
+  - {fileID: -7490170816590284949}
+  - {fileID: -1576567571185476453}
   - {fileID: -649184325668182194}
   - {fileID: -8822486712136361533}
-  - {fileID: -5539003460967907587}
-  - {fileID: -8565237474420999015}
-  - {fileID: 9105679202604773153}
-  - {fileID: 5862665161684083454}
-  - {fileID: -1576567571185476453}
-  - {fileID: -7490170816590284949}
-  - {fileID: -8932669799969313175}
-  - {fileID: 7111432605442525805}
-  - {fileID: 5742386647743723153}
-  - {fileID: -4977639165954686361}
   - {fileID: 7589975489834609958}
-  - {fileID: -4836959658892597320}
+  - {fileID: 5862665161684083454}
+  - {fileID: -8932669799969313175}
+  - {fileID: -1711584063931583170}
+  - {fileID: -5539003460967907587}
+  - {fileID: 7111432605442525805}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -164,6 +166,7 @@ MonoBehaviour:
   m_spacewarpMotionVectorTextureFormat: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
+  m_foveatedRenderingApi: 0
 --- !u!114 &-6013535859657437291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,23 +300,25 @@ MonoBehaviour:
   m_Name: Android
   m_EditorClassIdentifier: 
   features:
-  - {fileID: 8748895172567150087}
-  - {fileID: -266907256403135312}
-  - {fileID: -8997110612747745193}
-  - {fileID: -2737016233480024145}
-  - {fileID: 1591942617231707829}
-  - {fileID: -2644567813659083055}
-  - {fileID: -4067165463455165172}
-  - {fileID: 6478456700095784459}
-  - {fileID: -6013535859657437291}
-  - {fileID: 4987239451616978342}
-  - {fileID: 1178597099221720860}
-  - {fileID: -4769743451864495998}
-  - {fileID: -377095835898481394}
-  - {fileID: -3756355032236578904}
-  - {fileID: 5522439366355942585}
   - {fileID: 3207024606893024310}
+  - {fileID: 1591942617231707829}
+  - {fileID: -3756355032236578904}
+  - {fileID: 1052938192880996981}
+  - {fileID: -2737016233480024145}
+  - {fileID: 6478456700095784459}
+  - {fileID: -4067165463455165172}
+  - {fileID: -8997110612747745193}
+  - {fileID: 1178597099221720860}
+  - {fileID: 4987239451616978342}
+  - {fileID: -2644567813659083055}
+  - {fileID: 5522439366355942585}
+  - {fileID: -266907256403135312}
+  - {fileID: -6013535859657437291}
+  - {fileID: -4769743451864495998}
+  - {fileID: 8748895172567150087}
+  - {fileID: -377095835898481394}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -321,6 +326,7 @@ MonoBehaviour:
   m_spacewarpMotionVectorTextureFormat: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
+  m_foveatedRenderingApi: 0
 --- !u!114 &-3756355032236578904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,6 +540,28 @@ MonoBehaviour:
   Values:
   - {fileID: -7329088659312796184}
   - {fileID: -3885847699706531628}
+--- !u!114 &1052938192880996981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6a75d1f5ff90154ea2a8e58222a1f59, type: 3}
+  m_Name: FoveatedRenderingFeature Android
+  m_EditorClassIdentifier: 
+  m_enabled: 0
+  nameUi: Foveated Rendering
+  version: 1
+  featureIdInternal: com.unity.openxr.feature.foveatedrendering
+  openxrExtensionStrings: XR_UNITY_foveation XR_FB_foveation XR_FB_foveation_configuration
+    XR_FB_swapchain_update_state XR_FB_foveation_vulkan XR_META_foveation_eye_tracked
+    XR_META_vulkan_swapchain_create_info
+  company: Unity
+  priority: 0
+  required: 0
 --- !u!114 &1178597099221720860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +773,28 @@ MonoBehaviour:
   version: 1.0.0
   featureIdInternal: com.unity.openxr.feature.extension.performance_settings
   openxrExtensionStrings: XR_EXT_performance_settings
+  company: Unity
+  priority: 0
+  required: 0
+--- !u!114 &7401050513653150656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6a75d1f5ff90154ea2a8e58222a1f59, type: 3}
+  m_Name: FoveatedRenderingFeature Standalone
+  m_EditorClassIdentifier: 
+  m_enabled: 0
+  nameUi: Foveated Rendering
+  version: 1
+  featureIdInternal: com.unity.openxr.feature.foveatedrendering
+  openxrExtensionStrings: XR_UNITY_foveation XR_FB_foveation XR_FB_foveation_configuration
+    XR_FB_swapchain_update_state XR_FB_foveation_vulkan XR_META_foveation_eye_tracked
+    XR_META_vulkan_swapchain_create_info
   company: Unity
   priority: 0
   required: 0

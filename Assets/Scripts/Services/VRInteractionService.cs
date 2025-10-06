@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace Services
 {
@@ -13,8 +14,8 @@ namespace Services
     public class VRInteractionService : MonoBehaviour, IVRInteractionService
     {
         [Header("VR Settings")]
-        public XRBaseController leftController;
-        public XRBaseController rightController;
+        public XRBaseInteractor leftInteractor;
+        public XRBaseInteractor rightInteractor;
     
         private void Start()
         {
@@ -24,7 +25,6 @@ namespace Services
         public void OnObjectGrabbed(GameObject obj)
         {
             Debug.Log($"Object grabbed: {obj.name}");
-            SetHapticFeedback(0.5f, 0.1f);
         
             // Notify other services
             var uiService = ServiceLocator.Instance.GetService<IUIService>();
@@ -50,18 +50,6 @@ namespace Services
                 {
                     renderer.material.color = Color.white;
                 }
-            }
-        }
-
-        public void SetHapticFeedback(float intensity, float duration)
-        {
-            if (leftController != null)
-            {
-                leftController.SendHapticImpulse(intensity, duration);
-            }
-            if (rightController != null)
-            {
-                rightController.SendHapticImpulse(intensity, duration);
             }
         }
     }
