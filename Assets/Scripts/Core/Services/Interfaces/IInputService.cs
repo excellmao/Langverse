@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+﻿ using UnityEngine;
 using UnityEngine.XR;
 using System;
 
 namespace Core.Services.Interfaces
 {
-    public interface IVRInputService : IVRService
+    public interface IInputService : IVRService
     {
         // Controller Input
         event Action<XRNode, bool> OnTriggerPressed;
