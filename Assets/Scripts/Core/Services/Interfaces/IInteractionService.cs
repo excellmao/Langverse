@@ -45,10 +45,6 @@ namespace Core.Services.Interfaces
         void PlayReleaseHaptics(Transform hand);
         void PlayInteractionHaptics(Transform hand, float intensity = 0.5f);
         
-        // Object Physics
-        void SetObjectKinematic(GameObject obj, bool kinematic);
-        void SetObjectGravity(GameObject obj, bool useGravity);
-        void FreezeObjectRotation(GameObject obj, bool freeze);
         
         // Interaction Settings
         void SetGrabRadius(float radius);
