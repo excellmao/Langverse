@@ -1,30 +1,14 @@
 ﻿using UnityEngine;
-using System;
+using Core.Services.Interfaces;
 
-namespace Core.Services.Interfaces
+public interface IAudioService : IVRService
 {
-    public interface IAudioService: IVRService
-    {
-        //Events
-        event Action<AudioClip> AudioClipPlayed;
-        
-        //Methods
-        void PlayAudio(AudioClip clip, Vector3 position, float volume = 1f);
-        void PlayAudio(AudioClip clip, Transform source, float volume = 1f);
-        void StopAudio(AudioClip clip);
-        void StopAllAudio();
-        
-        //Audio Sources
-        AudioSource CreateAudioSource(Vector3 position);
-        AudioSource CreateAudioSource(Transform source);
-        void DestroyAudioSource(AudioSource source);
-        
-        //Volume
-        void SetMasterVolume(float volume);
-        float GetMasterVolume();
-        void SetSfxVolume(float volume);
-        float GetSfxVolume();
-        void SetMusicVolume(float volume);
-        float GetMusicVolume();
-    }
+    void PlayAudio(AudioClip clip, float volume = 1f, bool loop = false);
+    void PlayOneShot(AudioClip clip, float volume = 1f);
+    void StopAudio();
+    void PauseAudio();
+    void ResumeAudio();
+    void SetVolume(float volume);
+    float GetVolume();
+    bool IsPlaying { get; }
 }

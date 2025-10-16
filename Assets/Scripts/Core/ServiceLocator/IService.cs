@@ -4,7 +4,7 @@ namespace Core.ServiceLocator
 {
     public interface IService
     {
-        void Init();
+        void Initialize();
         void Cleanup();
         bool isInitialized { get; }
         string serviceId { get; }

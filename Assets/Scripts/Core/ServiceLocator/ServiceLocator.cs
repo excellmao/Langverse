@@ -41,7 +41,7 @@ namespace Core.ServiceLocator
                 _services[serviceType] = service;
                 if (initialize && !service.isInitialized)
                 {
-                    service.Init();
+                    service.Initialize();
                 }
                 Debug.Log($"Dich vu {serviceType.Name} dang ki thanh cong.");
                 serviceRegitered?.Invoke(serviceType, service);
@@ -53,7 +53,7 @@ namespace Core.ServiceLocator
         }
         
         //Lay dich vu ra de su dung
-        public static T Get<T>() where T : class, IService
+        public static T Get<T>() where T : class
         {
             _lock.EnterReadLock();
             try
