@@ -1,9 +1,8 @@
-﻿namespace Core.Services.Interfaces
+﻿using Core.ServiceLocator;
+
+namespace Core.Services.Interfaces
 {
-    public interface IVRService
+    public interface IVRService: IService
     {
-        void Initialize();
-        void Cleanup();
-        bool isInitialized { get; }
     }
 }

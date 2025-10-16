@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using Core.Services.Interfaces;
+using TMPro;
 using Core.ServiceLocator;
+using Core.Services.Interfaces;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class VocabManager : MonoBehaviour
@@ -20,29 +20,29 @@ public class VocabManager : MonoBehaviour
     [Header("Vocabulary Settings")]
     public List<VocabularyEntry> vocabularyEntries = new List<VocabularyEntry>();
 
-    [Header("Label Settings")]
+    [Header("Text Display Settings")]
+    [SerializeField] private float textSize = 0.3f;
+    [SerializeField] private Color textColor = Color.white;
+    [SerializeField] private Vector3 textOffset = new Vector3(0, 1.5f, 0);
     [SerializeField] private float textDisplayDuration = 3f;
     [SerializeField] private bool showTextOnHover = true;
 
-    // Services
-    private IAudioService _audioService;
-    private IVocabLabelService _labelService;
-
-    // Fast lookups
-    private readonly Dictionary<GameObject, VocabularyEntry> _objectToEntry = new();
-    private readonly Dictionary<GameObject, string> _objectToDisplayName = new();
+    private IVocabAudioService audioService;
+    private IVocabLabelService labelService;
+    private readonly Dictionary<GameObject, string> objectToWord = new();
+    private readonly Dictionary<GameObject, string> objectToCustomName = new();
 
     private void Start()
     {
-        // Resolve services from ServiceLocator
-        _audioService = ServiceLocator.Get<IAudioService>();
-        _labelService = ServiceLocator.Get<IVocabLabelService>();
+        // Get services from the ServiceLocator
+        audioService = ServiceLocator.Get<IVocabAudioService>();
+        labelService = ServiceLocator.Get<IVocabLabelService>();
 
-        if (_audioService == null)
+        if (audioService == null)
         {
-            Debug.LogError("[VocabManager] IAudioService not found. Make sure it is registered with ServiceLocator.");
+            Debug.LogError("[VocabManager] IVocabularyAudioService not found. Make sure it is registered with ServiceLocator.");
         }
-        if (_labelService == null)
+        if (labelService == null)
         {
             Debug.LogError("[VocabManager] IVocabLabelService not found. Make sure it is registered with ServiceLocator.");
         }
@@ -56,122 +56,81 @@ public class VocabManager : MonoBehaviour
         {
             if (entry?.interactableObject == null) continue;
 
-            var go = entry.interactableObject;
-
-            // Cache entry and resolved display name
-            var displayName = string.IsNullOrWhiteSpace(entry.customDisplayName)
-                ? go.name
+            var displayName = string.IsNullOrEmpty(entry.customDisplayName)
+                ? entry.interactableObject.name
                 : entry.customDisplayName;
 
-            _objectToEntry[go] = entry;
-            _objectToDisplayName[go] = displayName;
+            // Register with audio service
+            audioService?.RegisterVocabularyObject(entry.interactableObject, displayName);
 
-            // Hook XR events
-            SetupInteractionEvents(go);
+            // Register with label service (hidden by default)
+            labelService?.ShowLabel(entry.interactableObject, displayName);
+            labelService?.HideLabel(entry.interactableObject);
 
-            // Prepare label via service (hidden by default)
-            _labelService?.ShowLabel(go, displayName);
-            _labelService?.HideLabel(go);
+            objectToWord[entry.interactableObject] = displayName;
+            objectToCustomName[entry.interactableObject] = entry.customDisplayName;
+
+            SetupInteractionEvents(entry);
         }
     }
 
-    private void SetupInteractionEvents(GameObject obj)
+    private void SetupInteractionEvents(VocabularyEntry entry)
     {
-        var grab = obj.GetComponent<XRGrabInteractable>();
-        if (grab == null)
+        var grabInteractable = entry.interactableObject.GetComponent<XRGrabInteractable>();
+        if (grabInteractable != null)
         {
-            Debug.LogWarning($"[VocabManager] XRGrabInteractable not found on {obj.name}. Skipping interaction hooks.");
-            return;
-        }
+            grabInteractable.selectEntered.AddListener(OnObjectGrabbed);
+            grabInteractable.selectExited.AddListener(OnObjectReleased);
 
-        grab.selectEntered.AddListener(OnObjectGrabbed);
-        grab.selectExited.AddListener(OnObjectReleased);
-
-        if (showTextOnHover)
-        {
-            grab.hoverEntered.AddListener(OnObjectHoverEnter);
-            grab.hoverExited.AddListener(OnObjectHoverExit);
+            if (showTextOnHover)
+            {
+                grabInteractable.hoverEntered.AddListener(OnObjectHoverEnter);
+                grabInteractable.hoverExited.AddListener(OnObjectHoverExit);
+            }
         }
     }
 
     private void OnObjectGrabbed(SelectEnterEventArgs args)
     {
-        var go = args.interactableObject.transform.gameObject;
-        if (!_objectToEntry.TryGetValue(go, out var entry)) return;
+        var grabbedObject = args.interactableObject.transform.gameObject;
 
-        // Play pronunciation via audio service
-        if (entry.audioClip != null)
+        if (objectToWord.TryGetValue(grabbedObject, out var vocabWord))
         {
-            _audioService?.PlayAudio(entry.audioClip, 1f);
-        }
+            audioService?.PlayPronunciation(vocabWord);
+            labelService?.ShowLabel(grabbedObject, vocabWord);
 
-        // Show label via label service
-        if (_objectToDisplayName.TryGetValue(go, out var label))
-        {
-            _labelService?.ShowLabel(go, label);
-
-            // Auto-hide after duration
             if (textDisplayDuration > 0)
-            {
-                StartCoroutine(HideLabelAfterDelay(go, textDisplayDuration));
-            }
+                StartCoroutine(HideLabelAfterDelay(grabbedObject, textDisplayDuration));
         }
+
+        audioService?.OnObjectGrabbed(grabbedObject);
     }
 
     private void OnObjectReleased(SelectExitEventArgs args)
     {
-        var go = args.interactableObject.transform.gameObject;
-        // Optional: hide on release
-        // _labelService?.HideLabel(go);
+        var releasedObject = args.interactableObject.transform.gameObject;
+        // Optionally hide label on release
+        // labelService?.HideLabel(releasedObject);
     }
 
     private void OnObjectHoverEnter(HoverEnterEventArgs args)
     {
-        if (!showTextOnHover) return;
-
-        var go = args.interactableObject.transform.gameObject;
-        if (_objectToDisplayName.TryGetValue(go, out var label))
+        var obj = args.interactableObject.transform.gameObject;
+        if (objectToWord.TryGetValue(obj, out var vocabWord))
         {
-            _labelService?.ShowLabel(go, label);
+            labelService?.ShowLabel(obj, vocabWord);
         }
     }
 
     private void OnObjectHoverExit(HoverExitEventArgs args)
     {
-        if (!showTextOnHover) return;
-
-        var go = args.interactableObject.transform.gameObject;
-        _labelService?.HideLabel(go);
+        var obj = args.interactableObject.transform.gameObject;
+        labelService?.HideLabel(obj);
     }
 
-    private IEnumerator HideLabelAfterDelay(GameObject targetObject, float delay)
+    private System.Collections.IEnumerator HideLabelAfterDelay(GameObject obj, float seconds)
     {
-        yield return new WaitForSeconds(delay);
-        _labelService?.HideLabel(targetObject);
-    }
-
-    // Public helpers
-    public void ShowAllLabels()
-    {
-        foreach (var kv in _objectToDisplayName)
-        {
-            _labelService?.ShowLabel(kv.Key, kv.Value);
-        }
-    }
-
-    public void HideAllLabels()
-    {
-        foreach (var kv in _objectToDisplayName)
-        {
-            _labelService?.HideLabel(kv.Key);
-        }
-    }
-
-    public void UpdateObjectDisplayName(GameObject obj, string newName)
-    {
-        if (!_objectToDisplayName.ContainsKey(obj)) return;
-
-        _objectToDisplayName[obj] = newName;
-        _labelService?.ShowLabel(obj, newName);
+        yield return new WaitForSeconds(seconds);
+        labelService?.HideLabel(obj);
     }
 }

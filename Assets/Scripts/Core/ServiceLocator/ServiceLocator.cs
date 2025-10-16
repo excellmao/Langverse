@@ -12,48 +12,82 @@ namespace Core.ServiceLocator
         private static bool _isShuttingDown = false;
         
         // Bat tat event khi dich vu dc dang ki / xoa
-        public static event Action<Type, IService> serviceRegitered;
-        public static event Action<Type> serviceUnregitered;
+        public static event Action<Type, IService> serviceRegistered;
+        public static event Action<Type> serviceUnregistered;
         
         //Dang ki dich vu voi locator
         public static void Register<T>(T service, bool initialize = true) where T : class, IService
         {
+            if (service == null)
+            {
+                Debug.LogError($"Dich vu {typeof(T).Name} khong duoc null.");
+                return;
+            }
+
             if (_isShuttingDown)
             {
                 Debug.LogWarning($"Khong the dang ki dich vu {typeof(T).Name} khi dang tat.");
                 return;
             }
+
+            var serviceType = typeof(T);
+            IService toCleanup = null;
             _lock.EnterWriteLock();
+
             try
             {
-                var serviceType = typeof(T);
-                
-                if (_services.ContainsKey(serviceType))
+                if (_services.TryGetValue(serviceType, out var existingService))
                 {
                     Debug.LogWarning($"Dich vu {serviceType.Name} da ton tai.");
-                    var existingService = _services[serviceType];
-                    if (existingService.isInitialized)
-                    {
-                        existingService.Cleanup();
-                    }
+                    toCleanup = existingService;
                 }
 
                 _services[serviceType] = service;
-                if (initialize && !service.isInitialized)
-                {
-                    service.Initialize();
-                }
-                Debug.Log($"Dich vu {serviceType.Name} dang ki thanh cong.");
-                serviceRegitered?.Invoke(serviceType, service);
             }
             finally
             {
                 _lock.ExitWriteLock();
             }
+
+            //Cleanup ben ngoai lock
+            if (toCleanup != null && toCleanup.isInitialized)
+            {
+                try
+                {
+                    toCleanup.Cleanup();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(
+                        $"[ServiceLocator] Error cleaning up existing service {serviceType.Name}: {ex.Message}");
+                }
+            }
+            
+            if (initialize && !service.isInitialized)
+            {
+                try
+                {
+                    service.Initialize();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[ServiceLocator] Error initializing service {serviceType.Name}: {ex.Message}");
+                }
+            }
+            try
+            {
+                serviceRegistered?.Invoke(serviceType, service);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ServiceLocator] Error in ServiceRegistered subscribers for {serviceType.Name}: {ex.Message}");
+            }
+
+            Debug.Log($"[ServiceLocator] Service {serviceType.Name} registered.");
         }
-        
+
         //Lay dich vu ra de su dung
-        public static T Get<T>() where T : class
+        public static T Get<T>() where T : class, IService
         {
             _lock.EnterReadLock();
             try
@@ -89,29 +123,54 @@ namespace Core.ServiceLocator
         }
         
         //Xoa dich vu
-        public static bool Unregistered<T>() where T : class, IService
+        public static bool Unregister<T>() where T : class, IService
         {
+            var serviceType = typeof(T);
+            IService toCleanup = null;
+
             _lock.EnterWriteLock();
             try
             {
-                var serviceType = typeof(T);
                 if (_services.TryGetValue(serviceType, out var service))
                 {
-                    if (service.isInitialized)
-                    {
-                        service.Cleanup();
-                    }
+                    toCleanup = service;
                     _services.Remove(serviceType);
-                    Debug.Log($"Dich vu {serviceType.Name} da xoa thanh cong.");
-                    serviceUnregitered?.Invoke(serviceType);
-                    return true;
                 }
-                return false;
+                else
+                {
+                    return false;
+                }
             }
             finally
             {
                 _lock.ExitWriteLock();
             }
+
+            // Cleanup outside lock
+            if (toCleanup != null && toCleanup.isInitialized)
+            {
+                try
+                {
+                    toCleanup.Cleanup();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[ServiceLocator] Error cleaning up service {serviceType.Name}: {ex.Message}");
+                }
+            }
+
+            // Event outside lock
+            try
+            {
+                serviceUnregistered?.Invoke(serviceType);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ServiceLocator] Error in ServiceUnregistered subscribers for {serviceType.Name}: {ex.Message}");
+            }
+
+            Debug.Log($"[ServiceLocator] Service {serviceType.Name} unregistered.");
+            return true;
         }
         
         //Lay danh sach dich vu da dang ky
@@ -133,36 +192,40 @@ namespace Core.ServiceLocator
         //Xoa toan bo dich vu
         public static void Clear()
         {
+            List<IService> toCleanup;
+            
             _lock.EnterWriteLock();
             try
             {
                 _isShuttingDown = true;
-                
-                foreach (var service in _services.Values)
-                {
-                    if (service.isInitialized)
-                    {
-                        try
-                        {
-                            service.Cleanup();
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.LogError($"[ServiceLocator] Error cleaning up service {service.GetType().Name}: {ex.Message}");
-                        }
-                    }
-                }
-                
+                toCleanup = new List<IService>(_services.Values);
                 _services.Clear();
-                Debug.Log("[ServiceLocator] All services cleared.");
             }
             finally
             {
-                _isShuttingDown = false;
                 _lock.ExitWriteLock();
             }
+
+            foreach (var service in toCleanup)
+            {
+                if (service == null) continue;
+
+                if (service.isInitialized)
+                {
+                    try
+                    {
+                        service.Cleanup();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[ServiceLocator] Error cleaning up service {service.GetType().Name}: {ex.Message}");
+                    }
+                }
+            }
+
+            _isShuttingDown = false;
+            Debug.Log("[ServiceLocator] All services cleared."); 
         }
-        
         //Dem so dich vu da dang ky (bruh tai sao no khuyen nen co cai nay tu dem di vro)
         public static int ServiceCount
         {
