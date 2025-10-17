@@ -1,7 +1,8 @@
-﻿namespace Core.Interfaces
+﻿using Core.ServiceLocator;
+
+namespace Core.Interfaces
 {
-    public class IVRService
+    public interface IVRService : IService
     {
-        
     }
 }

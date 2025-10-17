@@ -1,7 +1,12 @@
-﻿namespace Core.Interfaces
+﻿using Core.ServiceLocator;
+using UnityEngine;
+
+namespace Core.Interfaces
 {
-    public class IVocabLabelService
+    public interface IVocabLabelService: IService
     {
-        
+        void ShowLabel(GameObject obj, string word);
+        void HideLabel(GameObject obj);
+        void HideAllLabels();
     }
 }
